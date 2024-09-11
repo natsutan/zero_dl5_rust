@@ -1,0 +1,6 @@
+[package]
+name = "ch1_normal_distribution"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
