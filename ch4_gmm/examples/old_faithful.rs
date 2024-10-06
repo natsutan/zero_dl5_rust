@@ -1,7 +1,8 @@
 use std::fs::File;
 use std::io::prelude::*;
 //use nalgebra::{Matrix2, OMatrix, Vector2, U1};
-//use plotly::Plot;
+use plotly::{Plot, Scatter};
+use plotly::common::Mode;
 
 fn read_file_2d(file_name: &str) -> (Vec<f64>, Vec<f64>) {
     let mut file = File::open(file_name).expect("File not found");
@@ -25,7 +26,10 @@ fn read_file_2d(file_name: &str) -> (Vec<f64>, Vec<f64>) {
 
 fn main() {
     let (x, y) = read_file_2d("examples/old_faithful.txt");
-    println!("{:?}", x);
-    println!("{:?}", y);
 
+    //plotyで散布図を作る。
+    let trace = Scatter::new(x, y).mode(Mode::Markers);
+    let mut plot = plotly::Plot::new();
+    plot.add_trace(trace);
+    plot.show();
 }
