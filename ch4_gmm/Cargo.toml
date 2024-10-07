@@ -6,3 +6,6 @@ edition = "2021"
 [dependencies]
 nalgebra = "*"
 plotly = "0.10.0"
+rand = "0.8"
+rstat = "0.6.0"
+rand_distr = "0.4.3"
