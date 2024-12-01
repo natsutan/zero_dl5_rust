@@ -1,5 +1,7 @@
 use std::io::prelude::*;
 use nalgebra as na;
+use plotly::common::Mode;
+use plotly::{Plot, Scatter, Contour};
 
 fn read_file()->na::OMatrix<f64,  na::Dyn, na::Dyn> {
     let file_name = "examples/old_faithful.txt";
@@ -65,6 +67,48 @@ fn likelihood(x: &na::OMatrix<f64, na::Dyn, na::Dyn>, phis: &na::DVector<f64>, m
     l / n as f64
 }
 
+fn plot_gmm(xs:na::OMatrix<f64,  na::Dyn, na::Dyn> , mus: &na::DMatrix<f64>, covs: &Vec<na::DMatrix<f64>>)  {
+    //散布図と等高線を描画
+    // xsの描画
+    let x = xs.column(0).iter().cloned().collect::<Vec<f64>>();
+    let y = xs.column(1).iter().cloned().collect::<Vec<f64>>();
+    let trace = Scatter::new(x, y).mode(Mode::Markers).name("data");
+
+    // 等高線の描画
+    // phis, mus, covsから等高線を描画する
+    let x_min = xs.column(0).min();
+    let x_max = xs.column(0).max();
+    let y_min = xs.column(1).min();
+    let y_max = xs.column(1).max();
+    let n = 100;
+    let step_x = (x_max - x_min) / n as f64;
+    let step_y = (y_max - y_min) / n as f64;
+    let x: Vec<f64> = (0..n).map(|i| x_min + step_x * i as f64).collect();
+    let y: Vec<f64> = (0..n).map(|i| y_min + step_y * i as f64).collect();
+    // k に対応するmus, covを使ってmultivariate_normalを呼出しzを計算。足し合わせる。
+    let z: Vec<Vec<f64>> = (0..n).map(|i| {
+        (0..n).map(|j| {
+            let xt = na::DVector::from_vec(vec![x[j], y[i]]);
+            (0..2).map(|k| {
+                let mu = mus.row(k).transpose();
+                let cov = covs[k].clone();
+                let z = 0.5 * multivariate_normal(&xt, &mu, &cov);
+                z
+            }).sum()
+        }).collect()
+    }).collect();
+
+    let trace2 = Contour::new(x.clone(), y.clone(), z).name("gmm");
+    let mut plot = Plot::new();
+    plot.add_trace(trace);
+    plot.add_trace(trace2);
+    plot.show();
+
+
+
+}
+
+
 fn main() {
     let data = read_file();
 
@@ -100,10 +144,11 @@ fn main() {
             qs.row_mut(n).scale_mut(1.0 / sum);
         }
         //M step
-        let qs_sum = qs.column_sum();
+        let qs_sum = qs.row_sum();
         for k in 0..K {
             // 1. phis
             phis[k] = qs_sum[k] / N as f64;
+
 
             // 2. mus
             let mut c = na::DVector::zeros(data.ncols());
@@ -111,7 +156,8 @@ fn main() {
                 let x = data.row(n).transpose().into_owned();
                 c += qs[(n, k)] * x;
             }
-            mus.row_mut(k).copy_from(&(&c / qs_sum[k]));
+            let mus_k = c.clone_owned() / qs_sum[k];
+            mus.row_mut(k).copy_from(&mus_k.transpose());
 
             // 3. covs
             let mut c = na::DMatrix::zeros(data.ncols(), data.ncols());
@@ -140,5 +186,6 @@ fn main() {
     println!("mus: {:?}", mus);
     println!("covs: {:?}", covs);
 
+    plot_gmm(data,  &mus, &covs);
 }
 
