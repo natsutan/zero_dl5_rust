@@ -1,13 +1,20 @@
-use tch::Tensor;
+use burn::tensor::Tensor;
+use burn::backend::{Autodiff, Wgpu};
+
+type Backend = Wgpu;
+type AutoDIffBackend = Autodiff<Backend>;
 
 fn main() {
-    println!("Cuda available: {}", tch::Cuda::is_available());
-    println!("Cudnn available: {}", tch::Cuda::cudnn_is_available());
-    let device = tch::Device::cuda_if_available();
+    let device = Default::default();
 
-    let x = Tensor::from(5.0);
-    let y = 3 * &x * &x;
+    let x = Tensor::<AutoDIffBackend, 1>::from_floats([5.0], &device).require_grad();
+    let y = x.clone().powf_scalar(2.0) * 3.0;
 
-    x.print();
+    // 勾配を求めて表示する
+    let gradients = y.backward();
+    let tensor_grad = x.grad(&gradients).unwrap();
+
+    println!("y = {}", y);
+    println!("dy/dx = {:?}",  tensor_grad.into_scalar());
 
 }
