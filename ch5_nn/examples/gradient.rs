@@ -13,11 +13,8 @@ fn rosenbrok(x0: &Tensor<AutoDIffBackend, 1>, x1: &Tensor<AutoDIffBackend, 1>) -
     y
 }
 
-
 fn main() {
-
     let device = Default::default();
-
 
     let mut new_x0 = 0.0;
     let mut new_x1 = 2.0;
@@ -45,5 +42,4 @@ fn main() {
 
     }
     println!("x0 = {}, x1 = {}", new_x0, new_x1);
-
 }
