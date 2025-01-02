@@ -5,4 +5,5 @@ edition = "2021"
 
 [dependencies]
 burn = { version = "~0.15", features = ["train", "wgpu", "vision", "candle"] }
-
+rand = "0.8.5"
+plotly = "0.10.0"
